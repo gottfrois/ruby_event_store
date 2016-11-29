@@ -15,6 +15,14 @@ module RubyEventStore
       expect(client.append_to_stream(TestEvent.new, stream_name: stream)).to eq(:ok)
     end
 
+    specify 'append_to_stream uses a locker' do
+      locker = double(:locker)
+      stream = SecureRandom.uuid
+      client = RubyEventStore::Client.new(repository: InMemoryRepository.new, locker: locker)
+      expect(locker).to receive(:with_lock).with(stream).and_yield
+      expect(client.append_to_stream(TestEvent.new, stream_name: stream)).to eq(:ok)
+    end
+
     specify 'append to default stream when not specified' do
       client = RubyEventStore::Client.new(repository: InMemoryRepository.new)
       test_event = TestEvent.new

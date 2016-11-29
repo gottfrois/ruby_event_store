@@ -2,12 +2,14 @@ module RubyEventStore
   class Client
     def initialize(repository:,
                    event_broker:  PubSub::Broker.new,
+                   locker: Locker.new,
                    page_size: PAGE_SIZE,
                    metadata_proc: nil)
-      @repository     = repository
-      @event_broker   = event_broker
-      @page_size      = page_size
-      @metadata_proc  = metadata_proc
+      @repository    = repository
+      @event_broker  = event_broker
+      @locker        = locker
+      @page_size     = page_size
+      @metadata_proc = metadata_proc
     end
 
     def publish_event(event, stream_name: GLOBAL_STREAM, expected_version: :any)
@@ -17,9 +19,11 @@ module RubyEventStore
     end
 
     def append_to_stream(event, stream_name: GLOBAL_STREAM, expected_version: :any)
-      validate_expected_version(stream_name, expected_version)
-      enriched_event = enrich_event_metadata(event)
-      repository.create(enriched_event, stream_name)
+      locker.with_lock(stream_name) do
+        validate_expected_version(stream_name, expected_version)
+        enriched_event = enrich_event_metadata(event)
+        repository.create(enriched_event, stream_name)
+      end
       :ok
     end
 
@@ -74,7 +78,7 @@ module RubyEventStore
     end
 
     private
-    attr_reader :repository, :page_size, :event_broker, :metadata_proc
+    attr_reader :repository, :page_size, :event_broker, :locker, :metadata_proc
 
     def enrich_event_metadata(event)
       metadata = event.metadata
