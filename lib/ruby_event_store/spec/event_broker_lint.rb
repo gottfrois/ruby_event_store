@@ -42,6 +42,7 @@ RSpec.shared_examples :event_broker do |broker_class|
 
     broker.add_subscriber(handler, [Test1DomainEvent, Test3DomainEvent])
     broker.add_subscriber(another_handler, [Test2DomainEvent])
+    broker.add_subscriber(another_handler, [Test2DomainEvent])
     broker.add_global_subscriber(global_handler)
 
     event1 = Test1DomainEvent.new

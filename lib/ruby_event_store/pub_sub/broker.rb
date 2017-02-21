@@ -23,7 +23,7 @@ module RubyEventStore
       DEFAULT_DISPATCHER = Dispatcher.new
 
       def initialize(dispatcher: DEFAULT_DISPATCHER)
-        @subscribers = Hash.new {|hsh, key| hsh[key] = [] }
+        @subscribers = Hash.new {|hsh, key| hsh[key] = Set.new }
         @global_subscribers = []
         @dispatcher = dispatcher
       end
